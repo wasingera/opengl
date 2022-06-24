@@ -11,7 +11,11 @@ add_executable(opengl ${SRC_FILES} ${EXT_FILES})
 target_include_directories(opengl PUBLIC include)
 
 if (WIN32)
-target_link_directories(opengl PUBLIC lib)
+    target_link_directories(opengl PUBLIC lib)
+    target_link_libraries(opengl glfw3)
 endif()
 
-target_link_libraries(opengl glfw3)
+if (APPLE)
+    find_package(glfw3)
+    target_link_libraries(opengl glfw)
+endif()
