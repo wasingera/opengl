@@ -5,6 +5,10 @@
 #include <iostream>
 #include <cmath>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -135,8 +139,27 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, texture1);
 
         s.use();
+
         s.setFloat("ratio", mixVal);
+        
         glBindVertexArray(VAO);
+
+        glm::mat4 trans {glm::mat4(1.0f)};
+        trans = glm::rotate(trans, (float) glfwGetTime(), glm::vec3 {0.0, 0.0, 1.0f});
+        trans = glm::scale(trans, glm::vec3{(float) sin((float) glfwGetTime())});
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        
+        unsigned int transformLoc = glGetUniformLocation(s.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3 {-0.5f, 0.5f, 0.0f});
+        trans = glm::scale(trans, glm::vec3{(float) sin((float) glfwGetTime())});
+        
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
