@@ -14,8 +14,25 @@
 
 void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-float mixVal {0.2};
+float deltaTime {0.0f};
+float lastFrame {0.0f};
+
+glm::vec3 cameraPos   { 0.0f, 0.0f, 3.0f};
+glm::vec3 cameraFront { 0.0f, 0.0f, -1.0f};
+glm::vec3 cameraUp    { 0.0f, 1.0f, 0.0f};
+
+float lastX {400};
+float lastY {300};
+
+float pitch {0};
+float yaw {-90.0f};
+
+bool firstMouse {true};
+
+float fov {45.0f};
 
 int main() {
     glfwInit();
@@ -31,7 +48,11 @@ int main() {
         return 1;
     }
     glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     if (!gladLoadGLLoader( (GLADloadproc) glfwGetProcAddress) ) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
@@ -91,7 +112,6 @@ int main() {
     s.use();
     s.setInt("texture0", 0);
     s.setInt("texture1", 1);
-    s.setFloat("ratio", mixVal);
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -169,14 +189,17 @@ int main() {
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    /* glEnableVertexAttribArray(2); */
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+
     while (!glfwWindowShouldClose(window)) {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
         processInput(window);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -190,24 +213,21 @@ int main() {
 
         s.use();
 
-        s.setFloat("ratio", mixVal);
-        
         glBindVertexArray(VAO);
 
-        /* glm::mat4 trans {glm::mat4(1.0f)}; */
-        /* trans = glm::rotate(trans, (float) glfwGetTime(), glm::vec3 {0.0, 0.0, 1.0f}); */
-        /* trans = glm::scale(trans, glm::vec3{(float) sin((float) glfwGetTime())}); */
-        /* trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f)); */
+        /* glm::vec3 cameraPos       = glm::vec3 {0.0f, 0.0f, 0.0f}; */
+        /* glm::vec3 cameraTarget    = glm::vec3 {0.0f, 0.0f, 0.0f}; */
+        /* glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget); */
 
-        /* model = glm::rotate(model, (float) glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f)); */
-        glm::mat4 viewMat {glm::mat4(1.0f)};
-        viewMat = glm::translate(viewMat, glm::vec3(0, 0, -3.0f));
-        /* viewMat = glm::rotate(viewMat, glm::radians(20.0f) * (float) glfwGetTime(), glm::vec3(0, 1, 0)); */
-        /* viewMat = glm::rotate(viewMat, (float) glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); */
-        /* viewMat = glm::rotate(viewMat, (float) glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f)); */
-        /* viewMat = glm::rotate(viewMat, (float) glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f)); */
+        /* glm::vec3 up = glm::vec3 {0.0f, 1.0f, 0.0f}; */
 
-        glm::mat4 projection { glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f)};
+        /* glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection)); */
+        /* glm::vec3 cameraUp    = glm::normalize(glm::cross(cameraDirection, cameraRight)); */
+
+        glm::mat4 viewMat {};
+        viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+        glm::mat4 projection { glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f)};
 
         s.setMat4("view", viewMat);
         s.setMat4("projection", projection);
@@ -224,7 +244,6 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
-        /* glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); */
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -239,6 +258,43 @@ int main() {
     return 0;
 }
 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    fov -= yoffset;
+    if (fov < 1.0f) fov = 1.0f;
+    if (fov > 90.0f) fov = 90.0f;
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xOffset = xpos - lastX;
+    float yOffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+
+    const float sensitivity = 0.1f;
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
+}
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
@@ -246,10 +302,14 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        if (mixVal <= 1.0) mixVal += .01;
-    }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        if (mixVal >= 0.0) mixVal -= .01;
-    }
+
+    const float cameraSpeed = 2.5f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
