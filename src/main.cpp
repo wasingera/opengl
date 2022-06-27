@@ -1,4 +1,5 @@
 #include "shader.h"
+#include "camera.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -17,22 +18,15 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-float deltaTime {0.0f};
-float lastFrame {0.0f};
-
-glm::vec3 cameraPos   { 0.0f, 0.0f, 3.0f};
-glm::vec3 cameraFront { 0.0f, 0.0f, -1.0f};
-glm::vec3 cameraUp    { 0.0f, 1.0f, 0.0f};
+Camera camera {glm::vec3(0.0f, 0.0f, 3.0f)};
 
 float lastX {400};
 float lastY {300};
 
-float pitch {0};
-float yaw {-90.0f};
+float deltaTime {0.0f};
+float lastFrame {0.0f};
 
 bool firstMouse {true};
-
-float fov {45.0f};
 
 int main() {
     glfwInit();
@@ -215,19 +209,9 @@ int main() {
 
         glBindVertexArray(VAO);
 
-        /* glm::vec3 cameraPos       = glm::vec3 {0.0f, 0.0f, 0.0f}; */
-        /* glm::vec3 cameraTarget    = glm::vec3 {0.0f, 0.0f, 0.0f}; */
-        /* glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget); */
+        glm::mat4 viewMat {camera.GetViewMatrix()};
 
-        /* glm::vec3 up = glm::vec3 {0.0f, 1.0f, 0.0f}; */
-
-        /* glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection)); */
-        /* glm::vec3 cameraUp    = glm::normalize(glm::cross(cameraDirection, cameraRight)); */
-
-        glm::mat4 viewMat {};
-        viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-        glm::mat4 projection { glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f)};
+        glm::mat4 projection { glm::perspective(glm::radians(camera.fov), 800.0f / 600.0f, 0.1f, 100.0f)};
 
         s.setMat4("view", viewMat);
         s.setMat4("projection", projection);
@@ -236,8 +220,6 @@ int main() {
             glm::mat4 model {glm::mat4(1.0f)};
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
-            /* if (i % 3 == 0) */
-            /*     angle = 90.0f * glfwGetTime(); */
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 
             s.setMat4("model", model);
@@ -259,9 +241,7 @@ int main() {
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    fov -= yoffset;
-    if (fov < 1.0f) fov = 1.0f;
-    if (fov > 90.0f) fov = 90.0f;
+    camera.ProcessMouseScroll(yoffset);
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -276,23 +256,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.1f;
-    xOffset *= sensitivity;
-    yOffset *= sensitivity;
-
-    yaw += xOffset;
-    pitch += yOffset;
-
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
+    camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -303,13 +267,15 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    const float cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(LEFT, deltaTime);
+
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(RIGHT, deltaTime);
 }
