@@ -202,9 +202,12 @@ int main() {
         /* model = glm::rotate(model, (float) glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f)); */
         glm::mat4 viewMat {glm::mat4(1.0f)};
         viewMat = glm::translate(viewMat, glm::vec3(0, 0, -3.0f));
+        /* viewMat = glm::rotate(viewMat, glm::radians(20.0f) * (float) glfwGetTime(), glm::vec3(0, 1, 0)); */
+        /* viewMat = glm::rotate(viewMat, (float) glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); */
+        /* viewMat = glm::rotate(viewMat, (float) glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f)); */
+        /* viewMat = glm::rotate(viewMat, (float) glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f)); */
 
         glm::mat4 projection { glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f)};
-        glm::mat4 ortho {glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f)};
 
         s.setMat4("view", viewMat);
         s.setMat4("projection", projection);
@@ -213,6 +216,8 @@ int main() {
             glm::mat4 model {glm::mat4(1.0f)};
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
+            /* if (i % 3 == 0) */
+            /*     angle = 90.0f * glfwGetTime(); */
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 
             s.setMat4("model", model);
