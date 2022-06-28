@@ -21,11 +21,12 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
             pitch = -89.0f;
     }
 
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front = glm::normalize(direction);
+    /* glm::vec3 direction; */
+    /* direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch)); */
+    /* direction.y = sin(glm::radians(pitch)); */
+    /* direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch)); */
+    /* front = glm::normalize(direction); */
+    updateCameraVectors();
 }
 
 void Camera::updateCameraVectors() {
@@ -56,6 +57,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
             position += right * velocity;
             break;
     }
+    position.y = 0;
     updateCameraVectors();
 }
 
