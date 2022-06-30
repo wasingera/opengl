@@ -18,7 +18,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-Camera camera {glm::vec3(0.0f, 0.0f, 3.0f)};
+Camera camera {glm::vec3(0.0f, 0.0f, 5.0f)};
 
 float lastX {400};
 float lastY {300};
@@ -212,11 +212,12 @@ int main() {
         glm::mat4 viewMat {camera.GetViewMatrix()};
 
         glm::mat4 projection { glm::perspective(glm::radians(camera.fov), 800.0f / 600.0f, 0.1f, 100.0f)};
+        /* glm::mat4 projection {camera.GetPerspectiveMatrix(camera.fov, 800.0f, 600.0f, 0.1f, 100.0f)}; */
 
         s.setMat4("view", viewMat);
         s.setMat4("projection", projection);
 
-        for (unsigned int i {0}; i < 10; i++) {
+        for (unsigned int i {0}; i < 2; i++) {
             glm::mat4 model {glm::mat4(1.0f)};
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;

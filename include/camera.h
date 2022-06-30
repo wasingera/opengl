@@ -36,6 +36,7 @@ class Camera {
     Camera(glm::vec3 position=glm::vec3(0.0f), glm::vec3 up=glm::vec3(0.0f, 1.0f, 0.0f), float pitch=PITCH, float yaw=YAW);
 
     glm::mat4 GetViewMatrix();
+    glm::mat4 GetPerspectiveMatrix(float fov, float width, float height, float near, float far);
 
     void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch=true);
     void updateCameraVectors();
