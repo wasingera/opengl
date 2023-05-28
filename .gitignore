@@ -3,3 +3,4 @@ build/
 opengl
 .vscode
 nul.d
+.cache/

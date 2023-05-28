@@ -1,4 +1,6 @@
 #include "camera.h"
+#include "glm/fwd.hpp"
+#include "glm/gtc/constants.hpp"
 #include <iostream>
 #include <glm/gtx/string_cast.hpp>
 
@@ -69,6 +71,7 @@ glm::mat4 Camera::GetPerspectiveMatrix(float fov, float width, float height, flo
 }
 
 glm::mat4 Camera::GetViewMatrix() {
+    return glm::lookAt(position, front + position, up);
     // now we find our coordinate system for a UVN camera
     // whatever the camera is looking at needs to be -z --> in NDC space, +z points out of screen
 
@@ -85,25 +88,35 @@ glm::mat4 Camera::GetViewMatrix() {
     glm::vec3 v = glm::normalize(glm::cross(n, u));
 
     // this changes basis from camera space to world space
-    glm::mat4 rotate(
-        u.x,  v.x,  n.x,  0.0f,
-        u.y,  v.y,  n.y,  0.0f,
-        u.z,  v.z,  n.z,  0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
-
-    // this inverse changes from world space to camera space
     /* glm::mat4 rotate( */
-    /*     u.x,  u.y,  u.z,  0, */
-    /*     v.x,  v.y,  v.z,  0, */
-    /*     n.x,  n.y,  n.z,  0, */
+    /*     u.x,  v.x,  n.x,  0.0f, */
+    /*     u.y,  v.y,  n.y,  0.0f, */
+    /*     u.z,  v.z,  n.z,  0.0f, */
     /*     0.0f, 0.0f, 0.0f, 1.0f */
     /* ); */
+
+    // this inverse changes from world space to camera space
+    glm::mat4 rotate(
+        u.x,  u.y,  u.z,  0.0f,
+        v.x,  v.y,  v.z,  0.0f,
+        n.x,  n.y,  n.z,  0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
 
     // moves the camera back to the origin
     glm::mat4 trans(glm::translate(glm::mat4(1.0f), -position));
 
+    glm::mat4 lookAt = rotate * trans;
+
+    std::cout << "\n -------------------\n";
+    std::cout << "CALC: " << glm::to_string(lookAt) << '\n';
+    std::cout << "TRAN: " << glm::to_string(glm::transpose(lookAt)) << '\n';
+    std::cout << "COMP: " << glm::to_string(glm::lookAt(position, target, up)) << "\n\n";
+
+
     // to go from camera space to world space we rotate and then translate
     // so we do the opposite to get from world space to camera space
+    /* return glm::lookAt(position, target, up); */
+    return lookAt;
     return rotate * trans;
 }
